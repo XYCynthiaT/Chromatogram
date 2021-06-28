@@ -1,0 +1,95 @@
+---
+title: "Elution Time of FPLC"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = F)
+pkgs <- c("dplyr", "ggplot2", "tidyr", "DT")
+for (pkg in pkgs) {
+        suppressPackageStartupMessages(library(pkg, character.only = T))
+}
+
+# data <- readRDS("../data/chromatogram1.rds")
+data2 <- readRDS("../data/chromatogram2.rds")
+```
+
+## The chromatogram
+
+Figure 1 is the chromatogram of six ERCC samples.
+
+```{r}
+ggplot(data2, aes(x = ml, y = mAU)) +
+        geom_line(aes(group = sample, color = sample)) +
+        labs(title = "Figure 1. The chromatogram of six ERCC samples",
+             x = "Volume eluted (ml)", y = "UV readings (mAu)") +
+        theme_bw()
+```
+
+## The variation of the site of compound peaks
+
+Table 1 showed the mean and the standard deviation of the site of compound peaks
+based on the volume eluted. The peaks from left to right corresponds to 
+LDL, HDL and albumin. The units of mean and sd are **ml**.
+
+```{r, message=FALSE}
+
+# Identidy the fraction regions
+peak_ldl <- vector("numeric", length = length(levels(data2$sample)))
+peak_hdl <- vector("double", length = length(levels(data2$sample)))
+peak_alb <- vector("double", length = length(levels(data2$sample)))
+for (i in seq_along(levels(data2$sample))){
+        ldl <- filter(data2, sample == levels(data2$sample)[i] & ml<10) %>%
+                filter(mAU == max(mAU))
+        peak_ldl[i] <- as.numeric(ldl[1,1])
+        hdl <- filter(data2, sample == levels(data2$sample)[i], ml<13 & ml>10) %>%
+                filter(mAU == max(mAU))
+        peak_hdl[i] <- as.numeric(hdl[1,1])
+        alb <- filter(data2, sample == levels(data2$sample)[i], ml>13) %>%
+                filter(mAU == max(mAU))
+        peak_alb[i] <- as.numeric(alb[1,1])
+}
+
+
+peaks <- data.frame(
+        sample = levels(data2$sample),
+        ldl = peak_ldl,
+        hdl = peak_hdl,
+        alb = peak_alb
+) %>%
+        pivot_longer(cols = 2:4, names_to = "comp", "values_to" = "ml") %>%
+        mutate(comp = factor(comp, 
+                               levels = c("ldl", "hdl", "alb"), 
+                               labels = c("LDL", "HDL", "Albumin")))
+summary <- peaks %>%
+        group_by(comp) %>%
+        summarise(
+                mean = mean(ml),
+                sd = sd(ml)
+        ) %>%
+        arrange(comp)
+datatable(summary, rownames = F) %>%
+        formatSignif(columns = 2:3, digits = 3)
+```
+
+Figure 2 showed the mean and standard deviation of these three compoments.
+```{r}
+ggplot(peaks, aes(x = comp, y = ml)) +
+        geom_jitter(aes(color = sample), width = 0.1) +
+        stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+                     geom="errorbar", color="red", width=0.1) +
+        labs(title = "Figure 2. The mean and standard deviation of elution time",
+             x = "compoments", y = "Volume eluted (ml)") +
+        theme_bw()
+```
+
+Figure 3 added the lines of the average volume eluted of three compoments to the chromatogram.
+```{r}
+ggplot(data2, aes(x = ml, y = mAU)) +
+        geom_line(aes(group = sample, color = sample)) +
+        geom_vline(xintercept = summary$mean, linetype = 2) +
+        labs(title = "Figure 3. The chromatogram of six ERCC samples \n with the average volume eluted of three compoments",
+             x = "Volume eluted (ml)", y = "UV readings (mAu)") +
+        theme_bw()
+```
+
