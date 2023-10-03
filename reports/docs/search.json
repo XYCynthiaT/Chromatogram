@@ -1,0 +1,79 @@
+[
+  {
+    "objectID": "untargeted_lipidome.html",
+    "href": "untargeted_lipidome.html",
+    "title": "HDL lipidome quantification",
+    "section": "",
+    "text": "source(\"global.R\")\nlibrary(ggrepel)\n\nlipid &lt;- readRDS(\"../data/untargeted_singletp_fin3_001.rds\")$quant\nAnalysis based on the targeted lipidomic results. File: mx 733759_Agus_lipidomics_human plasma lipoproteins_07-2023 submit.xlsx. The peak heights were converted to ng/mL based on the amount and peak height of iSTD."
+  },
+  {
+    "objectID": "untargeted_lipidome.html#data-processing",
+    "href": "untargeted_lipidome.html#data-processing",
+    "title": "HDL lipidome quantification",
+    "section": "Data processing",
+    "text": "Data processing\n\nFeatures with peak heights in blanks greater than or close to those in pooled samples were excluded. Identified by the pval comparing blank samples to pooled samples, p&lt;0.01.\nFeatures with InChI Keys that couldn’t be found in the PubChem were excluded.\nCompounds with identical InChI Keys were selected by lowest CV in pooled samples.\nAssign lipid class from LIPID MAPS and manually curated table.\nistds were selected by the minimun p-values from the the comparison between blank samples and pooled samples.\nConcentration were calculated based the istd with most similar chain length.\nCholesterol istd is missing. Used CE 16:1-d7"
+  },
+  {
+    "objectID": "untargeted_lipidome.html#cvs-of-pooled-samples",
+    "href": "untargeted_lipidome.html#cvs-of-pooled-samples",
+    "title": "HDL lipidome quantification",
+    "section": "CVs of pooled samples",
+    "text": "CVs of pooled samples\nThe CVs of pooled samples for each lipid species were calculated using the following formula:\n\\[\nCV_{lipid\\ species} = SD_{lipid\\ species}/Mean_{lipid\\ species} * 100\\%\n\\]\nWe are less confident with the lipid species with a high CV. These lipid species will be excluded for further analysis.\n\nhist(lipid$fdata$qc_cv, main = \"The distribution of CVs\")\n\n\n\nsum(lipid$fdata$qc_cv&gt;30)\n\n[1] 0\n\n\nWe excluded lipid species with a CV &gt; 30%. 0 features were excluded.\n\nlipid &lt;- subset_features(lipid, lipid$fdata$qc_cv&lt;30)\n\nThe hierarchical relationship of lipid classes."
+  },
+  {
+    "objectID": "untargeted_lipidome.html#following-analysis-included-all-quantified-lipid-species.",
+    "href": "untargeted_lipidome.html#following-analysis-included-all-quantified-lipid-species.",
+    "title": "HDL lipidome quantification",
+    "section": "Following analysis included all quantified lipid species.",
+    "text": "Following analysis included all quantified lipid species.\nIncluded all quantified lipid species. 347 lipid species for analysis."
+  },
+  {
+    "objectID": "untargeted_lipidome.html#lipid-class",
+    "href": "untargeted_lipidome.html#lipid-class",
+    "title": "HDL lipidome quantification",
+    "section": "Lipid class",
+    "text": "Lipid class\n\nPie chart\n\nlipid.class3 &lt;- subset_features(lipid, !is.na(lipid$fdata$\n                                                       class))\nlipid.class3 &lt;- summarize_feature(lipid.class3, \"class\")\nedata.prop3 &lt;- apply(lipid.class3$edata, 2, function(col){\n        col/sum(col)*100\n})\n\n# pie chart\npies.class3 &lt;- lapply(sampleNames(lipid), plotPie, edata.prop3)\nlegend.class3 &lt;- get_legend(pies.class3[[1]]+theme(legend.position = \"bottom\"))\npies.class3 &lt;- lapply(pies.class3, function(x)x+theme(legend.position = \"none\"))\nplot_grid(plotlist = pies.class3, nrow = 3)\n\n\n\n\n\n\nBar plot\n\n# bar plot\nplotBar(edata.prop3)\n\n\n\n\n\n\nPCA\n\nedata.scaled3 &lt;- scale(t(edata.prop3), center = T)\nres.pca &lt;- PCA(edata.scaled3, scale.unit = T, graph = FALSE)\n# fviz_eig(res.pca, addlabels = TRUE)\nfviz_pca_ind(res.pca, \n             axes = c(1,2),\n             repel = TRUE,\n             title = NULL\n) +\n        theme_cynthia_bw() +\n        theme(\n                legend.position = \"none\"\n        ) +\n        labs(title = NULL)"
+  },
+  {
+    "objectID": "untargeted_lipidome.html#lipid-main-class",
+    "href": "untargeted_lipidome.html#lipid-main-class",
+    "title": "HDL lipidome quantification",
+    "section": "Lipid main class",
+    "text": "Lipid main class\n\nPie chart\n\nlipid.class2 &lt;- subset_features(lipid, !is.na(lipid$fdata$Main.class))\nlipid.class2 &lt;- summarize_feature(lipid.class2, \"Main.class\")\nedata.prop2 &lt;- apply(lipid.class2$edata, 2, function(col){\n        col/sum(col)*100\n})\n\n# pie chart\npies.class2 &lt;- lapply(sampleNames(lipid), plotPie, edata.prop2)\nlegend.class2 &lt;- get_legend(pies.class2[[1]])\npies.class2 &lt;- lapply(pies.class2, function(x)x+theme(legend.position = \"none\"))\nplot_grid(plotlist = pies.class2, nrow = 3)\n\n\n\n\n\n\nBar plot\n\n# bar plot\nplotBar(edata.prop2)"
+  },
+  {
+    "objectID": "untargeted_lipidome.html#lipid-category",
+    "href": "untargeted_lipidome.html#lipid-category",
+    "title": "HDL lipidome quantification",
+    "section": "Lipid category",
+    "text": "Lipid category\n\nPie chart\n\n# edata\nlipid.class &lt;- subset_features(lipid, !is.na(lipid$fdata$Categories))\nlipid.class &lt;- summarize_feature(lipid.class, \"Categories\")\nedata.prop &lt;- apply(lipid.class$edata, 2, function(col){\n        col/sum(col)*100\n})\n\n# pie chart\npies.class1 &lt;- lapply(sampleNames(lipid), plotPie, edata.prop)\nlegend.class1 &lt;- get_legend(pies.class1[[1]])\npies.class1 &lt;- lapply(pies.class1, function(x)x+theme(legend.position = \"none\"))\nplot_grid(plotlist = pies.class1, nrow = 3) \n\n\n\n\n\n\nBar plot\n\n# bar plot\nplotBar(edata.prop)"
+  },
+  {
+    "objectID": "untargeted_lipidome.html#following-analysis-only-included-lipids-curated-in-lipid-maps.",
+    "href": "untargeted_lipidome.html#following-analysis-only-included-lipids-curated-in-lipid-maps.",
+    "title": "HDL lipidome quantification",
+    "section": "Following analysis only included lipids curated in LIPID MAPS.",
+    "text": "Following analysis only included lipids curated in LIPID MAPS.\n184 lipid species for the analysis."
+  },
+  {
+    "objectID": "untargeted_lipidome.html#lm-sub-class",
+    "href": "untargeted_lipidome.html#lm-sub-class",
+    "title": "HDL lipidome quantification",
+    "section": "LM: sub class",
+    "text": "LM: sub class\n\nPie chart\n\nlipid.class.sub &lt;- subset_features(lipid, !is.na(lipid$fdata$LM_sub_class))\nlipid.class.sub &lt;- summarize_feature(lipid.class.sub, \"LM_sub_class\")\nedata.prop.sub &lt;- apply(lipid.class.sub$edata, 2, function(col){\n        col/sum(col)*100\n})\n\n# pie chart\npies.class.sub &lt;- lapply(sampleNames(lipid), plotPie, edata.prop.sub)\nlegend.class.sub &lt;- get_legend(pies.class.sub[[1]]+theme(legend.position = \"bottom\")+guides(fill = guide_legend(nrow = 5)))\npies.class.sub &lt;- lapply(pies.class.sub, function(x)x+theme(legend.position = \"none\"))\nplot_grid(plotlist = pies.class.sub, nrow = 3) %&gt;%\n        plot_grid(legend.class.sub, nrow = 2, rel_heights = c(3,1))\n\n\n\n\n\n\nBar plot\n\n# bar plot\nplotBar(edata.prop.sub)\n\n\n\n\n\n\nPCA plot\n\nedata.scaled.sub &lt;- scale(t(edata.prop.sub), center = T)\nres.pca &lt;- PCA(edata.scaled.sub, scale.unit = T, graph = FALSE)\n# fviz_eig(res.pca, addlabels = TRUE)\nfviz_pca_ind(res.pca, \n             axes = c(1,2),\n             repel = TRUE,\n             title = NULL\n) +\n        theme_cynthia_bw() +\n        theme(\n                legend.position = \"none\"\n        ) +\n        labs(title = NULL)"
+  },
+  {
+    "objectID": "untargeted_lipidome.html#lm-main-class",
+    "href": "untargeted_lipidome.html#lm-main-class",
+    "title": "HDL lipidome quantification",
+    "section": "LM: main class",
+    "text": "LM: main class\n\nPie chart\n\nlipid.class.main &lt;- subset_features(lipid, !is.na(lipid$fdata$\n                                                       LM_main_class))\nlipid.class.main &lt;- summarize_feature(lipid.class.main, \"LM_main_class\")\nedata.prop.main &lt;- apply(lipid.class.main$edata, 2, function(col){\n        col/sum(col)*100\n})\n\n# pie chart\npies.class.main &lt;- lapply(sampleNames(lipid), plotPie, edata.prop.main)\nlegend.class.main &lt;- get_legend(pies.class.main[[1]]+theme(legend.position = \"bottom\")+guides(fill = guide_legend(nrow = 3)))\npies.class.main &lt;- lapply(pies.class.main, function(x)x+theme(legend.position = \"none\"))\nplot_grid(plotlist = pies.class.main, nrow = 3) %&gt;%\n        plot_grid(legend.class.main, nrow = 2, rel_heights = c(4,1))\n\n\n\n\n\n\nBar plot\n\n# bar plot\nplotBar(edata.prop.main)"
+  },
+  {
+    "objectID": "untargeted_lipidome.html#lm-core",
+    "href": "untargeted_lipidome.html#lm-core",
+    "title": "HDL lipidome quantification",
+    "section": "LM: core",
+    "text": "LM: core\n\nPie chart\n\nlipid.class.core &lt;- subset_features(lipid, !is.na(lipid$fdata$LM_core))\nlipid.class.core &lt;- summarize_feature(lipid.class.core, \"LM_core\")\nedata.prop.core &lt;- apply(lipid.class.core$edata, 2, function(col){\n        col/sum(col)*100\n})\n\n# pie chart\npies.class.core &lt;- lapply(sampleNames(lipid), plotPie, edata.prop.core)\nlegend.class.core &lt;- get_legend(pies.class.core[[1]])\npies.class.core &lt;- lapply(pies.class.core, function(x)x+theme(legend.position = \"none\"))\nplot_grid(plotlist = pies.class.core, nrow = 3)\n\n\n\n\n\n\nBar plot\n\n# bar plot\nplotBar(edata.prop.core)"
+  }
+]

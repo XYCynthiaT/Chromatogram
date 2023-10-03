@@ -1,0 +1,187 @@
+---
+title: "HDL lipidome quantification"
+format:
+  html:
+    embed-resources: true
+    self-contained-math: true
+    toc: true
+    toc-location: left
+editor: visual
+---
+
+```{r, prep, echo=FALSE, include=FALSE}
+source("global.R")
+library(ggrepel)
+
+lipid <- readRDS("../data/targeted_singletp_fin1.rds")
+```
+
+*Analysis based on the targeted lipidomic results. File: mx733759_Agus_Lipids_Single-point quant_Submit_CS_08-14-23.xlsx. The values were presented in ng/mL.*
+
+## *CVs of pooled samples*
+
+*The CVs of pooled samples for each lipid species were calculated using the following formula:*
+
+$$
+CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
+$$
+
+*We are less confident with the lipid species with a high CV. These lipid species will be excluded for further analysis.*
+
+```{r, cv}
+hist(lipid$fdata$qc_cv, main = "The distribution of CVs")
+sum(lipid$fdata$qc_cv>30)
+```
+
+*We excluded lipid species with a CV \> 30%. 17 features were excluded.*
+
+## *Noise based on blank samples*
+
+*For some lipid species, the mean concentration in HDL samples was even lower than the mean of blank samples. We felt less confident with the results of these lipid species and excluded them from further analysis.*
+
+```{r, blank}
+sum(lipid$fdata$sample_mean < lipid$fdata$blank_mean)
+```
+
+*13 species were excluded.*
+
+```{r, new data}
+lipid <- subset_features(lipid, lipid$fdata$qc_cv<30)
+
+```
+
+## Lipid classes
+
+The hierarchical relationship of lipid classes.
+
+![](lipid%20classes.png)
+
+## *Lipid category*
+
+### *Pie chart*
+
+```{r, category, fig.width=10, fig.height=6}
+# edata
+lipid.class <- summarize_feature(lipid, "Categories")
+edata.prop <- apply(lipid.class$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class1 <- lapply(sampleNames(lipid), plotPie, edata.prop)
+legend.class1 <- get_legend(pies.class1[[1]])
+pies.class1 <- lapply(pies.class1, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class1, nrow = 3) 
+
+```
+
+### *Bar plot*
+
+```{r, fig.width=10, fig.height=8}
+# bar plot
+plotBar(edata.prop)
+```
+
+### *PCA plot*
+
+```{r}
+edata.scaled <- scale(t(edata.prop), center = T)
+res.pca <- PCA(edata.scaled, scale.unit = T, graph = FALSE)
+# fviz_eig(res.pca, addlabels = TRUE)
+fviz_pca_ind(res.pca,
+             axes = c(1,2),
+             repel = TRUE,
+             title = NULL
+) +
+        theme_cynthia_bw() +
+        theme(
+                legend.position = "none"
+        ) +
+        labs(title = NULL)
+```
+
+## Lipid main class
+
+### Pie chart
+
+```{r, main class, fig.width=12, fig.height=8}
+lipid.class2 <- summarize_feature(lipid, "Main.class")
+edata.prop2 <- apply(lipid.class2$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class2 <- lapply(sampleNames(lipid), plotPie, edata.prop2)
+legend.class2 <- get_legend(pies.class2[[1]])
+pies.class2 <- lapply(pies.class2, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class2, nrow = 3)
+```
+
+### Bar plot
+
+```{r, fig.width=10, fig.height=10}
+# bar plot
+plotBar(edata.prop2)
+```
+
+### PCA plot
+
+```{r}
+
+edata.scaled2 <- scale(t(edata.prop2), center = T)
+res.pca <- PCA(edata.scaled2, scale.unit = T, graph = FALSE)
+# fviz_eig(res.pca, addlabels = TRUE)
+fviz_pca_ind(res.pca, 
+             axes = c(1,2),
+             repel = TRUE,
+             title = NULL
+) +
+        theme_cynthia_bw() +
+        theme(
+                legend.position = "none"
+        ) +
+        labs(title = NULL)
+```
+
+## Lipid subclass
+
+### Pie chart
+
+```{r, subclass, fig.width=12, fig.height=8}
+lipid.class3 <- summarize_feature(lipid, "class")
+edata.prop3 <- apply(lipid.class3$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class3 <- lapply(sampleNames(lipid), plotPie, edata.prop3)
+legend.class3 <- get_legend(pies.class3[[1]]+theme(legend.position = "bottom"))
+pies.class3 <- lapply(pies.class3, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class3, nrow = 3)
+```
+
+### Bar plot
+
+```{r, fig.width=10, fig.height=10}
+# bar plot
+plotBar(edata.prop3)
+```
+
+### PCA
+
+```{r}
+edata.scaled3 <- scale(t(edata.prop3), center = T)
+res.pca <- PCA(edata.scaled3, scale.unit = T, graph = FALSE)
+# fviz_eig(res.pca, addlabels = TRUE)
+fviz_pca_ind(res.pca, 
+             axes = c(1,2),
+             repel = TRUE,
+             title = NULL
+) +
+        theme_cynthia_bw() +
+        theme(
+                legend.position = "none"
+        ) +
+        labs(title = NULL)
+
+```

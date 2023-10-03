@@ -1,0 +1,54 @@
+---
+title: "Untargeted HDL lipidomics peak height"
+author: "Cynthia"
+format:
+  html:
+    self-contained-math: true
+    toc: true
+    toc-location: left
+server: shiny
+---
+
+## *CVs of pooled samples*
+
+*The CVs of pooled samples for each lipid species were calculated using the following formula:*
+
+$$
+CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
+$$
+
+*We are less confident with the lipid species with a high CV. These lipid species will be excluded for further analysis.*
+
+```{r, cv}
+plotOutput("hist")
+verbatimTextOutput("cv30")
+```
+
+
+## *Noise based on blank samples*
+
+*For some lipid species, the mean concentration in HDL samples was even lower than the mean of blank samples. We felt less confident with the results of these lipid species and excluded them from further analysis.*
+
+```{r, blank}
+verbatimTextOutput("blank")
+```
+
+0 species were excluded.
+
+Select lipid species without iSTD and normailze peak heights to protein amount.
+
+## Barplot
+
+Plasma, Inj Lp, and Inj DLp didn't have protein concentration and their peak heights remain unchanged.
+
+```{r, outputUI}
+lipidNames <- readRDS("lipidNames.rds")
+selectInput("feature", "Lipid species", choices = lipidNames)
+```
+
+
+
+```{r, outputPlot}
+plotOutput("bars")
+```
+

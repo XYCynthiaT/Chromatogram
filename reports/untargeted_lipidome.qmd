@@ -1,0 +1,263 @@
+---
+title: "HDL lipidome quantification"
+format:
+  html:
+    embed-resources: true
+    self-contained-math: true
+    toc: true
+    toc-location: left
+editor: visual
+---
+
+```{r, prep, message=FALSE}
+source("global.R")
+library(ggrepel)
+
+lipid <- readRDS("../data/untargeted_singletp_fin3_001.rds")$quant
+```
+
+*Analysis based on the targeted lipidomic results. File: mx 733759_Agus_lipidomics_human plasma lipoproteins_07-2023 submit.xlsx. The peak heights were converted to ng/mL based on the amount and peak height of iSTD.*
+
+## Data processing
+
+-   Features with peak heights in blanks greater than or close to those in pooled samples were excluded. Identified by the pval comparing blank samples to pooled samples, p\<0.01.
+
+-   Features with InChI Keys that couldn't be found in the PubChem were excluded.
+
+-   Compounds with identical InChI Keys were selected by lowest CV in pooled samples.
+
+-   Assign lipid class from LIPID MAPS and manually curated table.
+
+-   istds were selected by the minimun p-values from the the comparison between blank samples and pooled samples.
+
+-   Concentration were calculated based the istd with most similar chain length.
+
+-   Cholesterol istd is missing. Used CE 16:1-d7
+
+## CVs of pooled samples
+
+*The CVs of pooled samples for each lipid species were calculated using the following formula:*
+
+$$
+CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
+$$
+
+*We are less confident with the lipid species with a high CV. These lipid species will be excluded for further analysis.*
+
+```{r, cv}
+hist(lipid$fdata$qc_cv, main = "The distribution of CVs")
+sum(lipid$fdata$qc_cv>30)
+```
+
+We excluded lipid species with a CV \> 30%. `r sum(lipid$fdata$qc_cv>30)` features were excluded.
+
+```{r, new data}
+lipid <- subset_features(lipid, lipid$fdata$qc_cv<30)
+
+
+```
+
+The hierarchical relationship of lipid classes.
+
+![](lipid%20classes.png)
+
+## Following analysis included all quantified lipid species.
+
+Included all quantified lipid species. 347 lipid species for analysis.
+
+## Lipid class
+
+### Pie chart
+
+```{r, class, fig.width=12, fig.height=8}
+lipid.class3 <- subset_features(lipid, !is.na(lipid$fdata$
+                                                       class))
+lipid.class3 <- summarize_feature(lipid.class3, "class")
+edata.prop3 <- apply(lipid.class3$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class3 <- lapply(sampleNames(lipid), plotPie, edata.prop3)
+legend.class3 <- get_legend(pies.class3[[1]]+theme(legend.position = "bottom"))
+pies.class3 <- lapply(pies.class3, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class3, nrow = 3)
+```
+
+### Bar plot
+
+```{r, fig.width=16, fig.height=10}
+# bar plot
+plotBar(edata.prop3)
+```
+
+### PCA
+
+```{r}
+edata.scaled3 <- scale(t(edata.prop3), center = T)
+res.pca <- PCA(edata.scaled3, scale.unit = T, graph = FALSE)
+# fviz_eig(res.pca, addlabels = TRUE)
+fviz_pca_ind(res.pca, 
+             axes = c(1,2),
+             repel = TRUE,
+             title = NULL
+) +
+        theme_cynthia_bw() +
+        theme(
+                legend.position = "none"
+        ) +
+        labs(title = NULL)
+```
+
+## Lipid main class
+
+### Pie chart
+
+```{r, main class, fig.width=12, fig.height=8}
+lipid.class2 <- subset_features(lipid, !is.na(lipid$fdata$Main.class))
+lipid.class2 <- summarize_feature(lipid.class2, "Main.class")
+edata.prop2 <- apply(lipid.class2$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class2 <- lapply(sampleNames(lipid), plotPie, edata.prop2)
+legend.class2 <- get_legend(pies.class2[[1]])
+pies.class2 <- lapply(pies.class2, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class2, nrow = 3)
+```
+
+### Bar plot
+
+```{r, fig.width=10, fig.height=10}
+# bar plot
+plotBar(edata.prop2)
+```
+
+## Lipid category
+
+### Pie chart
+
+```{r, category, fig.width=10, fig.height=6}
+# edata
+lipid.class <- subset_features(lipid, !is.na(lipid$fdata$Categories))
+lipid.class <- summarize_feature(lipid.class, "Categories")
+edata.prop <- apply(lipid.class$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class1 <- lapply(sampleNames(lipid), plotPie, edata.prop)
+legend.class1 <- get_legend(pies.class1[[1]])
+pies.class1 <- lapply(pies.class1, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class1, nrow = 3) 
+
+```
+
+### Bar plot
+
+```{r, fig.width=10, fig.height=8}
+# bar plot
+plotBar(edata.prop)
+```
+
+## Following analysis only included lipids curated in LIPID MAPS.
+
+184 lipid species for the analysis.
+
+## LM: sub class
+
+### Pie chart
+
+```{r, lmsub, fig.width=12, fig.height=8}
+lipid.class.sub <- subset_features(lipid, !is.na(lipid$fdata$LM_sub_class))
+lipid.class.sub <- summarize_feature(lipid.class.sub, "LM_sub_class")
+edata.prop.sub <- apply(lipid.class.sub$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class.sub <- lapply(sampleNames(lipid), plotPie, edata.prop.sub)
+legend.class.sub <- get_legend(pies.class.sub[[1]]+theme(legend.position = "bottom")+guides(fill = guide_legend(nrow = 5)))
+pies.class.sub <- lapply(pies.class.sub, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class.sub, nrow = 3) %>%
+        plot_grid(legend.class.sub, nrow = 2, rel_heights = c(3,1))
+```
+
+### Bar plot
+
+```{r, fig.width=10, fig.height=10}
+# bar plot
+plotBar(edata.prop.sub)
+```
+
+### PCA plot
+
+```{r}
+
+edata.scaled.sub <- scale(t(edata.prop.sub), center = T)
+res.pca <- PCA(edata.scaled.sub, scale.unit = T, graph = FALSE)
+# fviz_eig(res.pca, addlabels = TRUE)
+fviz_pca_ind(res.pca, 
+             axes = c(1,2),
+             repel = TRUE,
+             title = NULL
+) +
+        theme_cynthia_bw() +
+        theme(
+                legend.position = "none"
+        ) +
+        labs(title = NULL)
+```
+
+## LM: main class
+
+### Pie chart
+
+```{r, lmmain, fig.width=12, fig.height=8}
+lipid.class.main <- subset_features(lipid, !is.na(lipid$fdata$
+                                                       LM_main_class))
+lipid.class.main <- summarize_feature(lipid.class.main, "LM_main_class")
+edata.prop.main <- apply(lipid.class.main$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class.main <- lapply(sampleNames(lipid), plotPie, edata.prop.main)
+legend.class.main <- get_legend(pies.class.main[[1]]+theme(legend.position = "bottom")+guides(fill = guide_legend(nrow = 3)))
+pies.class.main <- lapply(pies.class.main, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class.main, nrow = 3) %>%
+        plot_grid(legend.class.main, nrow = 2, rel_heights = c(4,1))
+```
+
+### Bar plot
+
+```{r, fig.width=16, fig.height=10}
+# bar plot
+plotBar(edata.prop.main)
+```
+
+## LM: core
+
+### Pie chart
+
+```{r, lmcore, fig.width=12, fig.height=8}
+lipid.class.core <- subset_features(lipid, !is.na(lipid$fdata$LM_core))
+lipid.class.core <- summarize_feature(lipid.class.core, "LM_core")
+edata.prop.core <- apply(lipid.class.core$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class.core <- lapply(sampleNames(lipid), plotPie, edata.prop.core)
+legend.class.core <- get_legend(pies.class.core[[1]])
+pies.class.core <- lapply(pies.class.core, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class.core, nrow = 3)
+```
+
+### Bar plot
+
+```{r, fig.width=10, fig.height=10}
+# bar plot
+plotBar(edata.prop.core)
+```

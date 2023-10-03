@@ -1,0 +1,156 @@
+---
+title: "Chromatogram CV for HDL Method paper"
+output: 
+        html_document:
+                code_folding: show
+                toc: true
+                toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F)
+pkgs <- c("dplyr", "ggplot2", "tidyr", "DT")
+for (pkg in pkgs) {
+        suppressPackageStartupMessages(library(pkg, character.only = T))
+}
+
+data <- readRDS("../data/chromatogram_86curves.rds")
+```
+
+## The chromatogram
+
+Figure 1 is the chromatogram of ERCC samples.
+
+```{r, fig.height=6}
+ggplot(data$eight, aes(x = ml, y = mAU)) +
+        geom_line(aes(group = sample, color = sample)) +
+        labs(title = "Figure 1.1 The chromatogram of eight ERCC samples",
+             x = "Volume eluted (ml)", y = "UV readings (mAu)") +
+        theme_bw()+
+        theme(legend.position="bottom")+
+        guides(color=guide_legend(nrow=8,byrow=TRUE))
+
+ggplot(data$six, aes(x = ml, y = mAU)) +
+        geom_line(aes(group = sample, color = sample)) +
+        labs(title = "Figure 1.2 The chromatogram of six ERCC samples",
+             x = "Volume eluted (ml)", y = "UV readings (mAu)") +
+        theme_bw()+
+        theme(legend.position="bottom")+
+        guides(color=guide_legend(nrow=6,byrow=TRUE))
+```
+
+## The CV of the site of compound peaks
+
+Table 1.1-1.2 showed the mean, the standard deviation, and CV of the site of LDL, HDL (second), and albumin peaks
+based on the volume eluted. The peaks from left to right corresponds to 
+LDL, HDL and albumin. The units of mean and sd are **ml**.  
+Coefficient of Variation = (Standard Deviation / Mean) * 100.
+
+```{r echo=FALSE, message=FALSE}
+findPeaks <- function(data, cutoffs = c(8.66, 11.32, 13)){
+        # the input data should be either data$eight or data$six
+        # Identify the fraction regions
+        peak_ldl <- vector("numeric", length = length(levels(data$sample)))
+        peak_hdl <- vector("double", length = length(levels(data$sample)))
+        peak_alb <- vector("double", length = length(levels(data$sample)))
+        for (i in seq_along(levels(data$sample))){
+                ldl <- filter(data, sample == levels(data$sample)[i] & ml<cutoffs[1]) %>%
+                        filter(mAU == max(mAU))
+                peak_ldl[i] <- as.numeric(ldl[1,1])
+                hdl <- filter(data, sample == levels(data$sample)[i], ml<cutoffs[3] & ml>cutoffs[2]) %>%
+                        filter(mAU == max(mAU))
+                peak_hdl[i] <- as.numeric(hdl[1,1])
+                alb <- filter(data, sample == levels(data$sample)[i], ml>cutoffs[3]) %>%
+                        filter(mAU == max(mAU))
+                peak_alb[i] <- as.numeric(alb[1,1])
+        }
+        peaks <- data.frame(
+                sample = levels(data$sample),
+                ldl = peak_ldl,
+                hdl = peak_hdl,
+                alb = peak_alb
+        ) %>%
+                pivot_longer(cols = 2:4, names_to = "comp", "values_to" = "ml") %>%
+                mutate(comp = factor(comp, 
+                                     levels = c("ldl", "hdl", "alb"), 
+                                     labels = c("LDL", "HDL", "Albumin")))
+}
+```
+```{r}
+peaks_8 <- findPeaks(data$eight)
+summary_8 <- peaks_8 %>%
+                group_by(comp) %>%
+                summarise(
+                        Mean = mean(ml),
+                        SD = sd(ml),
+                        CV = sd(ml)/mean(ml),
+                        CVinPercentage = sd(ml)/mean(ml) * 100
+                ) %>%
+                arrange(comp)
+datatable(summary_8, rownames = F, caption = "Table1.1 The Statistics for Elution Time with Eight Curves") %>%
+        formatSignif(columns = 2:5, digits = 3)
+```
+
+
+```{r, message=FALSE}
+peaks_6 <- findPeaks(data$six)
+summary_6 <- peaks_6 %>%
+                group_by(comp) %>%
+                summarise(
+                        Mean = mean(ml),
+                        SD = sd(ml),
+                        CV = sd(ml)/mean(ml),
+                        CVinPercentage = sd(ml)/mean(ml) * 100
+                ) %>%
+                arrange(comp)
+datatable(summary_6, rownames = F, caption = "Table1.2 The Statistics for Elution Time with Six Curves") %>%
+        formatSignif(columns = 2:5, digits = 3)
+```
+
+Figure 2.1-2.2 showed the mean and standard deviation, of these three components.
+```{r, fig.height=6}
+ggplot(peaks_8, aes(x = comp, y = ml)) +
+        geom_jitter(aes(color = sample), width = 0.1) +
+        stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+                     geom="errorbar", color="red", width=0.1) +
+        labs(title = "Figure 2.1. The mean and standard deviation of elution time with eight curves",
+             x = "compoments", y = "Volume eluted (ml)") +
+        theme_bw() +
+        theme(legend.position="bottom")+
+        guides(color=guide_legend(nrow=4,byrow=TRUE))
+```
+
+```{r, fig.height=6}
+ggplot(peaks_6, aes(x = comp, y = ml)) +
+        geom_jitter(aes(color = sample), width = 0.1) +
+        stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+                     geom="errorbar", color="red", width=0.1) +
+        labs(title = "Figure 2.2. The mean and standard deviation of elution time with six curves",
+             x = "compoments", y = "Volume eluted (ml)") +
+        theme_bw()+
+        theme(legend.position="bottom")+
+        guides(color=guide_legend(nrow=6,byrow=TRUE))
+```
+
+Figure 3.1-3.2 added the lines of the average volume eluted of three components to the chromatogram.
+```{r, fig.height=6}
+ggplot(data$eight, aes(x = ml, y = mAU)) +
+        geom_line(aes(group = sample, color = sample)) +
+        geom_vline(xintercept = summary_8$Mean, linetype = 2) +
+        labs(title = "Figure 3.1. The chromatogram of eight ERCC samples \n with the average volume eluted of LDL, HDL (second), and Albumin",
+             x = "Volume eluted (ml)", y = "UV readings (mAU)") +
+        theme_bw()+
+        theme(legend.position="bottom")+
+        guides(color=guide_legend(nrow=8,byrow=TRUE))
+```
+
+```{r, fig.height=6}
+ggplot(data$six, aes(x = ml, y = mAU)) +
+        geom_line(aes(group = sample, color = sample)) +
+        geom_vline(xintercept = summary_6$Mean, linetype = 2) +
+        labs(title = "Figure 3.2. The chromatogram of six ERCC samples \n with the average volume eluted of LDL, HDL (second), and Albumin",
+             x = "Volume eluted (ml)", y = "UV readings (mAU)") +
+        theme_bw()+
+        theme(legend.position="bottom")+
+        guides(color=guide_legend(nrow=6,byrow=TRUE))
+```
