@@ -15,6 +15,9 @@ function(input, output, session) {
         # output$lipids <- renderUI({
         #         selectInput("feature", "Lipid species", choices = lipidNames)
         # })
+        output$pie <- renderPlot({
+                plotPie()
+        })
         output$bars <- renderPlot({
                 feature <- featureNames(lipid2)[lipid2$fdata$name==input$feature]
                 plotBars(feature)

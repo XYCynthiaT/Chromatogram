@@ -32,9 +32,10 @@ import_wcmc_excel <- function(file,
                 range     = pdata_range
         ) %>%
                 as.data.frame
-        if(any(duplicated(pdata[,1])))
+        if(any(duplicated(pdata[,1]))) {
                 pdata <- pdata[!duplicated(pdata[,1]),]
                 warning("Within the pdata_range, there are duplicated names in the first column. Rows with redundent names were removed.")
+        }
         pdata <- column_to_rownames(pdata, 
                                     colnames(pdata)[1]) %>%
                 t %>% as.data.frame
@@ -64,24 +65,24 @@ import_wcmc_excel <- function(file,
 
 # 3 Calculate CV from QC samples and remove QC from peak height table
 collapse_qc <- function(HTobj, qc_names){
-        qc <- subset_samples(HTobj, samples = sampleNames(HTobj) %in% qc_names)
+        qc <- HTobj[, sampleNames(HTobj) %in% qc_names]
         qc_mean <- apply(qc$edata, 1, mean, na.rm = T)
         qc_sd <- apply(qc$edata, 1, sd, na.rm = T)
         HTobj$fdata$qc_mean <- qc_mean
         HTobj$fdata$qc_cv <- qc_sd/qc_mean*100
         HTobj$assay$qc <- qc
-        HTobj <- subset_samples(HTobj, !(sampleNames(HTobj) %in% qc_names))
+        HTobj <- HTobj[, !(sampleNames(HTobj) %in% qc_names)]
         return(HTobj)
 }
 
 # 4 Calulate minimum and mean from blank sampels
 collapse_blank <- function(HTobj, blank_names){
-        blank <- subset_samples(HTobj, samples = sampleNames(HTobj) %in% blank_names)
+        blank <- HTobj[, sampleNames(HTobj) %in% blank_names]
         blank_min <- apply(blank$edata, 1, min, na.rm = T)
         HTobj$fdata$blank_mean <- apply(blank$edata, 1, mean, na.rm = T)
         HTobj$fdata$blank_min <- blank_min
         HTobj$assay$blank <- blank
-        HTobj <- subset_samples(HTobj, !(sampleNames(HTobj) %in% blank_names))
+        HTobj <- HTobj[, !(sampleNames(HTobj) %in% blank_names)]
         return(HTobj)
 }
 
@@ -104,21 +105,21 @@ removeNoise <- function(htset){
 }
 
 # 6 Assign lipid classes
-assignClass <- function(htset, lipid.class){
+assignClass <- function(htset, annotation, lipid.class){
         htset$fdata$class <- NA
         abbrs <- unique(lipid.class)
         for (abbr in abbrs) {
                 pattern <- paste0("^", abbr, " ")
-                htset$fdata$class[grepl(pattern, htset$fdata$name)] <- abbr
+                htset$fdata$class[grepl(pattern, htset$fdata[,annotation])] <- abbr
         }
-        htset$fdata$class[grepl("Cholesterol", htset$fdata$name)] <- "Cholesterol"
-        htset$fdata$class[grepl("Ceramide", htset$fdata$name)] <- "Cer"
-        htset$fdata$class[grepl("PC-O|PC O-|PC p-|PC-p", htset$fdata$name, ignore.case = T)] <- "EtherPC"
-        htset$fdata$class[grepl("LPC-O|LPC O-|LPC p-", htset$fdata$name, ignore.case = T)] <- "EtherLPC"
-        htset$fdata$class[grepl("PE-O|PE O-|PE p-", htset$fdata$name, ignore.case = T)] <- "EtherPE"
-        htset$fdata$class[grepl("LPE-O|LPE O-|LPE p-", htset$fdata$name, ignore.case = T)] <- "EtherLPE"
-        htset$fdata$class[grepl("TG-O|TG O-", htset$fdata$name, ignore.case = T)] <- "EtherTG"
-        htset$fdata$class[grepl("sphingosine", htset$fdata$name, ignore.case = T)] <- "Sphingosine"
+        htset$fdata$class[grepl("Cholesterol", htset$fdata[,annotation])] <- "Cholesterol"
+        htset$fdata$class[grepl("Ceramide", htset$fdata[,annotation])] <- "Cer"
+        htset$fdata$class[grepl("PC-O|PC O-|PC p-|PC-p", htset$fdata[,annotation], ignore.case = T)] <- "EtherPC"
+        htset$fdata$class[grepl("LPC-O|LPC O-|LPC p-", htset$fdata[,annotation], ignore.case = T)] <- "EtherLPC"
+        htset$fdata$class[grepl("PE-O|PE O-|PE p-", htset$fdata[,annotation], ignore.case = T)] <- "EtherPE"
+        htset$fdata$class[grepl("LPE-O|LPE O-|LPE p-", htset$fdata[,annotation], ignore.case = T)] <- "EtherLPE"
+        htset$fdata$class[grepl("TG-O|TG O-", htset$fdata[,annotation], ignore.case = T)] <- "EtherTG"
+        htset$fdata$class[grepl("sphingosine", htset$fdata[,annotation], ignore.case = T)] <- "Sphingosine"
         return(htset)
 }
 
@@ -150,17 +151,17 @@ filter_by_cv <- function(htset, cv){
 
 
 # 9 Calculate concentration
-calibrate_lipidomics_wcmc <- function(htset, istd, class_name, ESI_name, chain_name){
-        if(missing(class_name))
+calibrate_lipidomics_wcmc <- function(htset, istd, name_col, class_col, ESI_col, chain_col, bond_col){
+        if(missing(class_col))
                 stop("[ HTSet ] Must have 'class' that specifies the feature variable of lipid class")
         
-        if(!class_name %in% colnames(htset$fdata))
-                stop(paste0("[ HTSet ] The class variable ", class_name, "not found in the fdata"))
+        if(!class_col %in% colnames(htset$fdata))
+                stop(paste0("[ HTSet ] The class variable ", class_col, "not found in the fdata"))
         
-        if(missing(ESI_name))
+        if(missing(ESI_col))
                 stop("[ HTSet ] Must have 'ESI' that specifies the feature variable of ESI mode")
         
-        if(!ESI_name %in% colnames(htset$fdata))
+        if(!ESI_col %in% colnames(htset$fdata))
                 stop(c("[ HTSet ] The ESI variable '", ESI, "' not found in the fdata"),
                      call. = FALSE)
         if(!all(htset$fdata$class %in% istd$fdata$class)) {
@@ -170,15 +171,30 @@ calibrate_lipidomics_wcmc <- function(htset, istd, class_name, ESI_name, chain_n
 
         sample_vol <- htset$assay$sample_volumn_ul
         edata <- lapply(1:nfeatures(htset), function(i){
-                class <- htset$fdata[i, class_name]
-                esi <- htset$fdata[i, ESI_name]
-                chain <- htset$fdata[i, chain_name]
-                match.class <- grepl(paste0("^",class,"$"), istd$fdata[,class_name])
-                match.esi <- grepl(esi, istd$fdata[,ESI_name])
-                istd.refined <- istd[match.class&match.esi]
-                match.chain <- which.min(abs(chain - istd.refined$fdata[,chain_name]))
-                spike_amt <- istd.refined$fdata$spike_amt[match.chain]
-                ratio <- htset$edata[i,]/istd.refined$edata[match.chain,] # divide by rows
+                class <- htset$fdata[i, class_col]
+                esi <- htset$fdata[i, ESI_col]
+                chain <- htset$fdata[i, chain_col]
+                bond <- htset$fdata[i, bond_col]
+                match.class <- grepl(paste0("^",class,"$"), istd$fdata[,class_col])
+                match.esi <- grepl(esi, istd$fdata[,ESI_col])
+                istd.refined <- istd[match.class&match.esi,]
+                
+                close.bond <- min(abs(bond - istd.refined$fdata[,bond_col]))
+                match.bond <- which(abs(bond - istd.refined$fdata[,bond_col]) == close.bond)
+                close.chain <- min(abs(chain - istd.refined$fdata[,chain_col]))
+                match.chain <- which(abs(chain - istd.refined$fdata[,chain_col]) == close.chain)
+                match.bond.chain <- intersect(match.bond, match.chain)
+                if (length(match.bond.chain) == 0) {
+                        match.bond.chain <- match.bond # if match.chain != match.length, prior bond
+                }
+                if (length(match.bond.chain) > 1) {
+                        keep <- which.max(istd.refined$fdata[match.bond.chain, "qc_mean"]) 
+                        match.bond.chain <- match.bond.chain[keep]# if multiple matches, select the most abundant one
+                }
+                # istd.refined$fdata[match.bond.chain, name_col]
+                print(data.frame(species = htset$fdata[i,name_col], istd = istd.refined$fdata[match.bond.chain, name_col]))
+                spike_amt <- istd.refined$fdata$spike_amt[match.bond.chain]
+                ratio <- htset$edata[i,]/istd.refined$edata[match.bond.chain,] # divide by rows
                 conc <- ratio*spike_amt/sample_vol * 1000
         }) %>% 
                 do.call(rbind, .) 

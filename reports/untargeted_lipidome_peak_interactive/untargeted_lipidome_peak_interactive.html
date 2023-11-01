@@ -49,7 +49,6 @@ ul.task-list li input[type="checkbox"] {
    
   <ul>
   <li><a href="#cvs-of-pooled-samples" id="toc-cvs-of-pooled-samples" class="nav-link active" data-scroll-target="#cvs-of-pooled-samples"><em>CVs of pooled samples</em></a></li>
-  <li><a href="#noise-based-on-blank-samples" id="toc-noise-based-on-blank-samples" class="nav-link" data-scroll-target="#noise-based-on-blank-samples"><em>Noise based on blank samples</em></a></li>
   <li><a href="#barplot" id="toc-barplot" class="nav-link" data-scroll-target="#barplot">Barplot</a></li>
   </ul>
 </nav>
@@ -96,21 +95,16 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <pre class="shiny-text-output noplaceholder" id="cv30"></pre>
 </div>
 </div>
-</section>
-<section id="noise-based-on-blank-samples" class="level2">
-<h2 class="anchored" data-anchor-id="noise-based-on-blank-samples"><em>Noise based on blank samples</em></h2>
-<p><em>For some lipid species, the mean concentration in HDL samples was even lower than the mean of blank samples. We felt less confident with the results of these lipid species and excluded them from further analysis.</em></p>
+<p>Select lipid species without iSTD and normalize their peak heights to total peak heights within each sample.</p>
+<p>Total peak heights consists of major lipid species which can be quantified with iSTDs and minor species which don’t have corresponding iSTDs. The percentage of both types of species are shown below.</p>
 <div class="cell">
 <div class="cell-output-display">
-<pre class="shiny-text-output noplaceholder" id="blank"></pre>
+<div class="shiny-plot-output html-fill-item" id="pie" style="width:100%;height:400px;"></div>
 </div>
 </div>
-<p>0 species were excluded.</p>
-<p>Select lipid species without iSTD and normailze peak heights to protein amount.</p>
 </section>
 <section id="barplot" class="level2">
 <h2 class="anchored" data-anchor-id="barplot">Barplot</h2>
-<p>Plasma, Inj Lp, and Inj DLp didn’t have protein concentration and their peak heights remain unchanged.</p>
 <div class="cell">
 <div class="cell-output-display no-overflow-x">
 <div class="form-group shiny-input-container">
@@ -118,27 +112,16 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <div>
 <select id="feature"><option value="13-HODE" selected="">13-HODE</option>
 <option value="13-HODE cholesteryl ester">13-HODE cholesteryl ester</option>
-<option value="13-HpOTrE">13-HpOTrE</option>
 <option value="13-KODE">13-KODE</option>
 <option value="16(17)-EpDPE">16(17)-EpDPE</option>
 <option value="3-beta-hydroxy-5-cholestenoic acid">3-beta-hydroxy-5-cholestenoic acid</option>
 <option value="8-HETE">8-HETE</option>
-<option value="AHexCer 49:0;O3|AHexCer (O-14:0)17:0;O2/18:0;O">AHexCer 49:0;O3|AHexCer (O-14:0)17:0;O2/18:0;O</option>
-<option value="AHexCer 53:4;O3|AHexCer (O-18:1)15:2;O2/20:1;O">AHexCer 53:4;O3|AHexCer (O-18:1)15:2;O2/20:1;O</option>
 <option value="CerP 16:1;2O/18:1">CerP 16:1;2O/18:1</option>
 <option value="CerP 18:1;2O/16:0">CerP 18:1;2O/16:0</option>
-<option value="CerP 40:2;O2">CerP 40:2;O2</option>
 <option value="CerP 42:2;2O">CerP 42:2;2O</option>
-<option value="Cholesterol">Cholesterol</option>
 <option value="cis-13-docosenoic acid">cis-13-docosenoic acid</option>
-<option value="CL 66:9|CL 16:2_16:2_16:2_18:3">CL 66:9|CL 16:2_16:2_16:2_18:3</option>
-<option value="CL 74:1|CL 16:0_16:0_24:0_18:1">CL 74:1|CL 16:0_16:0_24:0_18:1</option>
-<option value="CL 79:6|CL 44:0_35:6">CL 79:6|CL 44:0_35:6</option>
-<option value="CL 81:1|CL 17:0_18:0_28:0_18:1">CL 81:1|CL 17:0_18:0_28:0_18:1</option>
-<option value="CL 83:6|CL 44:1_39:5">CL 83:6|CL 44:1_39:5</option>
 <option value="CoQ10">CoQ10</option>
 <option value="DGCC 16:0|DGCC 8:0_8:0">DGCC 16:0|DGCC 8:0_8:0</option>
-<option value="DGCC 35:4|DGCC 15:2_20:2">DGCC 35:4|DGCC 15:2_20:2</option>
 <option value="docosanamide">docosanamide</option>
 <option value="FAHFA 18:0/20:2">FAHFA 18:0/20:2</option>
 <option value="FAHFA 26:0">FAHFA 26:0</option>
@@ -152,20 +135,14 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="GM3 d34:1">GM3 d34:1</option>
 <option value="Hex3Cer 18:1;2O/16:0">Hex3Cer 18:1;2O/16:0</option>
 <option value="HexCer 18:1;2O/24:0">HexCer 18:1;2O/24:0</option>
-<option value="HexCer 40:9;O4">HexCer 40:9;O4</option>
-<option value="HexCer 42:1;O2">HexCer 42:1;O2</option>
 <option value="HexCer-NS d40:1">HexCer-NS d40:1</option>
 <option value="HexCer-NS d41:1">HexCer-NS d41:1</option>
 <option value="HexCer-NS d42:2">HexCer-NS d42:2</option>
 <option value="lactosylceramide d18:1/24:1 15Z">lactosylceramide d18:1/24:1 15Z</option>
-<option value="LDGCC 22:3">LDGCC 22:3</option>
-<option value="LNAPE 18:2/N-20:0">LNAPE 18:2/N-20:0</option>
-<option value="LNAPE 18:2/N-20:1">LNAPE 18:2/N-20:1</option>
 <option value="LNAPE 20:4_N-19:1">LNAPE 20:4_N-19:1</option>
 <option value="LNAPE 20:4_N-3:0">LNAPE 20:4_N-3:0</option>
 <option value="LPA 18:0">LPA 18:0</option>
 <option value="LPC O-16:0">LPC O-16:0</option>
-<option value="LPC O-16:1">LPC O-16:1</option>
 <option value="LPC O-18:0">LPC O-18:0</option>
 <option value="LPC O-18:1">LPC O-18:1</option>
 <option value="LPC O-18:2">LPC O-18:2</option>
@@ -177,9 +154,6 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="LPC O-24:1">LPC O-24:1</option>
 <option value="LPC P-16:0 or LPC O-16:1">LPC P-16:0 or LPC O-16:1</option>
 <option value="LPE O-16:1">LPE O-16:1</option>
-<option value="LPE O-18:0">LPE O-18:0</option>
-<option value="LPE O-18:1">LPE O-18:1</option>
-<option value="LPE O-21:3">LPE O-21:3</option>
 <option value="MG 20:4">MG 20:4</option>
 <option value="MGDG 16:0_20:3">MGDG 16:0_20:3</option>
 <option value="MGDG 34:2">MGDG 34:2</option>
@@ -190,61 +164,35 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="NAE 14:1">NAE 14:1</option>
 <option value="NAE 18:4">NAE 18:4</option>
 <option value="NAE 20:2">NAE 20:2</option>
-<option value="NAE 23:1">NAE 23:1</option>
-<option value="NAE 25:1">NAE 25:1</option>
-<option value="NAGly 30:3;O2|NAGly 10:0;O(FA 20:2)">NAGly 30:3;O2|NAGly 10:0;O(FA 20:2)</option>
-<option value="NAOrn 17:0">NAOrn 17:0</option>
 <option value="OxPC 36:3+1O">OxPC 36:3+1O</option>
 <option value="PA 16:0_18:2">PA 16:0_18:2</option>
 <option value="palmitamide">palmitamide</option>
 <option value="palmitoyl ethanolamide">palmitoyl ethanolamide</option>
 <option value="PC O-16:1_18:2">PC O-16:1_18:2</option>
 <option value="PC O-18:0_16:0">PC O-18:0_16:0</option>
-<option value="PC O-20:0_20:4 Isomer A">PC O-20:0_20:4 Isomer A</option>
 <option value="PC O-20:0_20:4 Isomer B">PC O-20:0_20:4 Isomer B</option>
-<option value="PC O-22:0_20:4">PC O-22:0_20:4</option>
-<option value="PC O-23:2">PC O-23:2</option>
-<option value="PC O-28:3|PC O-9:0_19:3">PC O-28:3|PC O-9:0_19:3</option>
 <option value="PC O-30:0">PC O-30:0</option>
 <option value="PC O-30:1">PC O-30:1</option>
-<option value="PC O-30:2|PC O-10:0_20:2">PC O-30:2|PC O-10:0_20:2</option>
 <option value="PC O-31:7">PC O-31:7</option>
 <option value="PC O-32:0">PC O-32:0</option>
 <option value="PC O-32:1">PC O-32:1</option>
 <option value="PC O-33:0">PC O-33:0</option>
 <option value="PC O-33:1">PC O-33:1</option>
-<option value="PC O-33:2|PC O-13:0_20:2">PC O-33:2|PC O-13:0_20:2</option>
 <option value="PC O-33:5">PC O-33:5</option>
 <option value="PC O-33:6">PC O-33:6</option>
-<option value="PC O-33:6|PC O-11:0_22:6">PC O-33:6|PC O-11:0_22:6</option>
 <option value="PC O-34:0">PC O-34:0</option>
-<option value="PC O-34:1|PC O-25:1_9:0">PC O-34:1|PC O-25:1_9:0</option>
 <option value="PC O-35:1">PC O-35:1</option>
 <option value="PC O-35:5">PC O-35:5</option>
 <option value="PC O-36:0">PC O-36:0</option>
 <option value="PC O-37:0">PC O-37:0</option>
 <option value="PC O-37:5">PC O-37:5</option>
 <option value="PC O-38:6|PC O-16:0_22:6">PC O-38:6|PC O-16:0_22:6</option>
-<option value="PC O-38:7">PC O-38:7</option>
-<option value="PC O-38:7|PC O-16:2_22:5">PC O-38:7|PC O-16:2_22:5</option>
 <option value="PC O-39:7">PC O-39:7</option>
-<option value="PC O-39:9|PC O-20:5_19:4">PC O-39:9|PC O-20:5_19:4</option>
 <option value="PC O-40:2 or PC 40:2e">PC O-40:2 or PC 40:2e</option>
 <option value="PC O-40:3 or PC 40:3e">PC O-40:3 or PC 40:3e</option>
 <option value="PC O-40:5">PC O-40:5</option>
-<option value="PC O-40:6|PC O-18:1_22:5">PC O-40:6|PC O-18:1_22:5</option>
-<option value="PC O-40:7|PC O-18:2_22:5">PC O-40:7|PC O-18:2_22:5</option>
-<option value="PC O-40:9">PC O-40:9</option>
-<option value="PC O-40:9|PC O-18:4_22:5">PC O-40:9|PC O-18:4_22:5</option>
-<option value="PC O-41:11|PC O-19:5_22:6">PC O-41:11|PC O-19:5_22:6</option>
-<option value="PC O-41:9|PC O-15:2_26:7">PC O-41:9|PC O-15:2_26:7</option>
-<option value="PC O-42:11|PC O-18:5_24:6">PC O-42:11|PC O-18:5_24:6</option>
-<option value="PC O-42:11|PC O-26:7_16:4">PC O-42:11|PC O-26:7_16:4</option>
 <option value="PC O-42:2 or PC 42:2e">PC O-42:2 or PC 42:2e</option>
 <option value="PC O-42:7 or PC 42:7e">PC O-42:7 or PC 42:7e</option>
-<option value="PC O-42:9|PC O-18:3_24:6">PC O-42:9|PC O-18:3_24:6</option>
-<option value="PC O-42:9|PC O-21:5_21:4">PC O-42:9|PC O-21:5_21:4</option>
-<option value="PC O-44:6|PC O-18:2_26:4">PC O-44:6|PC O-18:2_26:4</option>
 <option value="PC O-44:8 or PC 44:8e">PC O-44:8 or PC 44:8e</option>
 <option value="PC O-46:6 or PC 46:6e">PC O-46:6 or PC 46:6e</option>
 <option value="PC O-46:7">PC O-46:7</option>
@@ -252,12 +200,11 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="PC P-32:0 or PC O-32:1">PC P-32:0 or PC O-32:1</option>
 <option value="PC P-32:1 or PC O-32:2">PC P-32:1 or PC O-32:2</option>
 <option value="PC P-34:0 or PC O-34:1">PC P-34:0 or PC O-34:1</option>
+<option value="PC P-34:1 or PC O-34:2">PC P-34:1 or PC O-34:2</option>
 <option value="PC P-34:1 or PC O-34:2 Isomer A">PC P-34:1 or PC O-34:2 Isomer A</option>
-<option value="PC P-34:1 or PC O-34:2 Isomer B">PC P-34:1 or PC O-34:2 Isomer B</option>
 <option value="PC P-34:2 or PC O-34:3">PC P-34:2 or PC O-34:3</option>
 <option value="PC P-36:1 or PC O-36:2">PC P-36:1 or PC O-36:2</option>
 <option value="PC P-36:1 or PC O-36:2 A">PC P-36:1 or PC O-36:2 A</option>
-<option value="PC P-36:1 or PC O-36:2 B">PC P-36:1 or PC O-36:2 B</option>
 <option value="PC P-36:2 or PC O-36:3">PC P-36:2 or PC O-36:3</option>
 <option value="PC P-36:3 or PC O-36:4">PC P-36:3 or PC O-36:4</option>
 <option value="PC P-36:4 or PC O-36:5">PC P-36:4 or PC O-36:5</option>
@@ -265,7 +212,6 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="PC P-38:3 or PC O-38:4">PC P-38:3 or PC O-38:4</option>
 <option value="PC P-38:4 or PC O-38:5 A">PC P-38:4 or PC O-38:5 A</option>
 <option value="PC P-38:4 or PC O-38:5 B">PC P-38:4 or PC O-38:5 B</option>
-<option value="PC P-38:4 or PC O-38:5 Isomer A">PC P-38:4 or PC O-38:5 Isomer A</option>
 <option value="PC P-38:4 or PC O-38:5 Isomer B">PC P-38:4 or PC O-38:5 Isomer B</option>
 <option value="PC P-38:5 or PC O-38:6">PC P-38:5 or PC O-38:6</option>
 <option value="PC P-40:3 or PC O-40:4">PC P-40:3 or PC O-40:4</option>
@@ -277,15 +223,12 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="PC P-42:4 or PC O-42:5">PC P-42:4 or PC O-42:5</option>
 <option value="PC P-42:5 or PC O-42:6">PC P-42:5 or PC O-42:6</option>
 <option value="PC P-42:5 or PC O-42:6 A">PC P-42:5 or PC O-42:6 A</option>
-<option value="PC P-42:5 or PC O-42:6 B">PC P-42:5 or PC O-42:6 B</option>
 <option value="PC P-44:4 or PC O-44:5">PC P-44:4 or PC O-44:5</option>
 <option value="PC-O 16:0_18:1">PC-O 16:0_18:1</option>
 <option value="PC-p 18:0_22:6">PC-p 18:0_22:6</option>
 <option value="PE O-16:1_18:1">PE O-16:1_18:1</option>
 <option value="PE O-16:1_18:2">PE O-16:1_18:2</option>
 <option value="PE O-16:1_22:6">PE O-16:1_22:6</option>
-<option value="PE O-17:1_18:2">PE O-17:1_18:2</option>
-<option value="PE O-17:1_20:4">PE O-17:1_20:4</option>
 <option value="PE O-18:1_20:3">PE O-18:1_20:3</option>
 <option value="PE O-18:1_22:6">PE O-18:1_22:6</option>
 <option value="PE O-18:2_22:6">PE O-18:2_22:6</option>
@@ -304,30 +247,18 @@ CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
 <option value="PE P-38:4 or PE O-38:5">PE P-38:4 or PE O-38:5</option>
 <option value="PE P-38:5 or PE O-38:6">PE P-38:5 or PE O-38:6</option>
 <option value="PE P-40:5 or PE O-40:6">PE P-40:5 or PE O-40:6</option>
-<option value="PE-Cer 20:0;2O/22:2">PE-Cer 20:0;2O/22:2</option>
-<option value="PE-Cer 20:1;2O/22:0">PE-Cer 20:1;2O/22:0</option>
 <option value="PE-O 18:1_22:6">PE-O 18:1_22:6</option>
 <option value="PGE2">PGE2</option>
 <option value="Phosphatidylethanolamine alkenyl 16:0-20:4">Phosphatidylethanolamine alkenyl 16:0-20:4</option>
 <option value="Phosphatidylethanolamine alkenyl 18:0-18:2">Phosphatidylethanolamine alkenyl 18:0-18:2</option>
-<option value="PMeOH 37:4|PMeOH 17:0_20:4">PMeOH 37:4|PMeOH 17:0_20:4</option>
 <option value="prostaglandin F2.alpha. dimethylamine">prostaglandin F2.alpha. dimethylamine</option>
-<option value="SHexCer 25:1;O2">SHexCer 25:1;O2</option>
-<option value="SHexCer 34:1;3O">SHexCer 34:1;3O</option>
-<option value="SHexCer 34:2;3O">SHexCer 34:2;3O</option>
-<option value="SHexCer 41:0;O2">SHexCer 41:0;O2</option>
 <option value="SHexCer d34:1">SHexCer d34:1</option>
-<option value="SL 51:2;O2|SL 19:1;O/32:1;O">SL 51:2;O2|SL 19:1;O/32:1;O</option>
-<option value="SL 53:2;O2">SL 53:2;O2</option>
-<option value="SL 53:6;O|SL 17:1;O/36:5">SL 53:6;O|SL 17:1;O/36:5</option>
 <option value="ST 27:1;O">ST 27:1;O</option>
 <option value="ST 27:1;O;S">ST 27:1;O;S</option>
 <option value="ST 28:1;O;S">ST 28:1;O;S</option>
 <option value="TG O-16:0_16:0_18:1">TG O-16:0_16:0_18:1</option>
 <option value="TG O-18:0_16:0_18:1">TG O-18:0_16:0_18:1</option>
-<option value="TG O-18:1_16:0_18:1">TG O-18:1_16:0_18:1</option>
-<option value="TG O-56:9|TG O-16:3_19:1_21:5">TG O-56:9|TG O-16:3_19:1_21:5</option>
-<option value="VAE 23:0">VAE 23:0</option></select>
+<option value="TG O-18:1_16:0_18:1">TG O-18:1_16:0_18:1</option></select>
 <script type="application/json" data-for="feature" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div>

@@ -13,7 +13,7 @@ editor: visual
 source("global.R")
 library(ggrepel)
 
-lipid <- readRDS("../data/targeted_singletp_fin1.rds")
+lipid <- readRDS("../data/targeted_singletp_fin3_all.rds")
 ```
 
 *Analysis based on the targeted lipidomic results. File: mx733759_Agus_Lipids_Single-point quant_Submit_CS_08-14-23.xlsx. The values were presented in ng/mL.*

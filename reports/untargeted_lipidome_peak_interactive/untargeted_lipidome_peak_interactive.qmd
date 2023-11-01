@@ -25,21 +25,17 @@ verbatimTextOutput("cv30")
 ```
 
 
-## *Noise based on blank samples*
+Select lipid species without iSTD and normalize their peak heights to total peak heights within each sample.
 
-*For some lipid species, the mean concentration in HDL samples was even lower than the mean of blank samples. We felt less confident with the results of these lipid species and excluded them from further analysis.*
+Total peak heights consists of major lipid species which can be quantified with iSTDs and minor species which don't have corresponding iSTDs. The percentage of both types of species are shown below.
 
-```{r, blank}
-verbatimTextOutput("blank")
+```{r, outputPie, fig.height=6, fig.width=10}
+plotOutput("pie")
 ```
 
-0 species were excluded.
-
-Select lipid species without iSTD and normailze peak heights to protein amount.
 
 ## Barplot
 
-Plasma, Inj Lp, and Inj DLp didn't have protein concentration and their peak heights remain unchanged.
 
 ```{r, outputUI}
 lipidNames <- readRDS("lipidNames.rds")

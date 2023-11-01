@@ -17,19 +17,19 @@ htset <- import_wcmc_excel(filename,
 htset <- subset_features(htset, !is.na(htset$fdata$InChIKey))
 htset
 
-# 3 Compare blank to pool
-blankvspool <- apply(htset$edata, 1, function(x){
-        x[is.na(x)] <- 0
-        t.test(x[16:18], x[19:21], alternative = "less")$p.value # blank < pool
-})
-htset$fdata$blankvspool <- round(blankvspool, 2)
-htset <- subset_features(htset, htset$fdata$blankvspool<0.01)
+# 3 Compare blank to pool (Don't use)
+# blankvspool <- apply(htset$edata, 1, function(x){
+#         x[is.na(x)] <- 0
+#         t.test(x[16:18], x[19:21], alternative = "less")$p.value # blank < pool
+# })
+# htset$fdata$blankvspool <- round(blankvspool, 2)
+# htset <- subset_features(htset, htset$fdata$blankvspool<0.01)
 htset
 
 # 3 Exclude InchI Key without a CID (Use these codes for the first run)
-# cid <- get_cid(htset$fdata$InChIKey, 
-#                from = "inchikey", 
-#                match = "first", 
+# cid <- get_cid(htset$fdata$InChIKey,
+#                from = "inchikey",
+#                match = "first",
 #                verbose = FALSE)
 # cid <- cid[!is.na(cid$cid),]
 # cid <- cid[!duplicated(cid$query),]
@@ -88,7 +88,7 @@ htset$fdata <- cbind(htset$fdata, lipid.class[,2:4])
 
 # From manually curated list
 lipid.class2 <- read.csv("raw-data/HDL_lipidome/Lipid subclass nomenclature.csv")
-htset <- assignClass(htset, lipid.class2$Abbreviation)
+htset <- assignClass(htset, "name", lipid.class2$Abbreviation)
 
 # 7.1 Manually add some classes
 htset$fdata$class[htset$fdata$name == "GlcCerd14:14E/20:02OH"] <- "GlcCer"
@@ -131,7 +131,7 @@ if(!identical(rownames(sample.list), sampleNames(htset)))
 htset$pdata <- cbind(htset$pdata, sample.list)
 
 # 10 Import istd
-istd <- readRDS("data/istd(all).rds")
+istd <- readRDS("data/istd(abundant).rds")
 htset$assay$sample_volumn_ul <- 50
 htset$fdata$class <- sub("(Cer)-.*", "\\1", htset$fdata$class)
 
@@ -149,23 +149,37 @@ htset.quant <- htset[quant.idx,]
 
 # 12 Quantification
 htset.quant <- calibrate_lipidomics_wcmc(htset.quant, istd, 
-                                         class_name = "class", 
-                                         ESI_name = "ESI mode", 
-                                         chain_name = "chain.length")
+                                         name_col = "name",
+                                         class_col = "class", 
+                                         ESI_col = "ESI mode", 
+                                         chain_col = "chain.length",
+                                         bond_col = "double.bond")
 
 htset.quant$fdata$class[grepl("Cholesterol", htset.quant$fdata$name)] <- "Cholesterol"
+htset$fdata$class[grepl("Cholesterol", htset$fdata$name)] <- "Cholesterol"
 
-htset.quant.class <- summarize_feature(htset.quant, "class")
+filename <- "raw-data/HDL_lipidome/mx733759_Agus_Lipids_Single-point quant_with cholesterol_Submit_10-17-23 combine.xlsx"
+
+chol <- import_wcmc_excel(filename, 
+                           sheet = "positive quant", 
+                           edata_range = "H9:AB9", 
+                           pdata_range = "G1:AB7", 
+                           fdata_range = "A8:G9", 
+                           "InChI Key", "na")
+htset.quant$edata[grepl("Cholesterol", htset.quant$fdata$name),] <- chol$edata[,1:15]
+
 # 13 Finalize
 data <- list(quant = htset.quant,
              peak = htset)
 
-saveRDS(data, "data/untargeted_singletp_fin3_001.rds")
+saveRDS(data, "data/untargeted_singletp_fin4_all(single_istd).rds")
 
 
 
 
-
+library(ggsci)
+library(ggrepel)
+htset.quant.class <- summarize_feature(htset.quant, "class")
 edata.prop3 <- apply(htset.quant.class$edata, 2, function(col){
         col/sum(col)*100
 })

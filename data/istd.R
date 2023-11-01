@@ -85,38 +85,15 @@ istd.peakheight <- collapse_blank(istd.peakheight, blank_names = paste0("MB00", 
 # Remove  got neg values?
 # istd.peakheight <- removeNoise(istd.peakheight)
 
-# Compare the mean of blank samples and pooled samples
-qcBlank <- cbind(istd.peakheight$assay$blank$edata, istd.peakheight$assay$qc$edata)
-blankvspool <- apply(qcBlank, 1, function(x){
-        x[is.na(x)] <- 0
-        t.test(x[1:3], x[4:6], alternative = "less")$p.value # blank < pool
-})
-istd.peakheight$fdata$blank.vs.pool <- round(blankvspool, 1)
-
-blankvssample <- apply(qcBlank, 1, function(x){
-        t.test(x[1:3], x[4:6], alternative = "less")$p.value # blank < sample
-})
-istd.peakheight$fdata$blank.vs.sample <- round(blankvssample, 1)
-
-
-# Select the istd with lowest p.value in each class category and ESI mode
-istd.peakheight$fdata <- istd.peakheight$fdata %>% 
-        rownames_to_column() %>%
-        group_by(class, `ESI mode`) %>%
-        mutate(min = min(blank.vs.pool),
-               keep = blank.vs.pool==min) %>%
-        column_to_rownames()
-istd.peakheight <- subset_features(istd.peakheight, istd.peakheight$fdata$keep)
-
 saveRDS(istd.peakheight, "data/istd(all).rds")
 
 
-# Select the istd with lowest CV
+# Select the most abundant istd for each class
 istd.peakheight$fdata <- istd.peakheight$fdata %>% 
         rownames_to_column() %>%
         group_by(class, `ESI mode`) %>%
-        mutate(rank = rank(qc_cv)) %>%
+        mutate(rank = rank(-qc_mean)) %>%
         column_to_rownames()
 istd.peakheight <- subset_features(istd.peakheight, istd.peakheight$fdata$rank == 1)
 
-saveRDS(istd.peakheight, "data/istd(pval).rds")
+saveRDS(istd.peakheight, "data/istd(abundant).rds")

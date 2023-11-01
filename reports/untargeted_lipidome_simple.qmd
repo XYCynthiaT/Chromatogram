@@ -1,0 +1,276 @@
+---
+title: "HDL lipidome quantification (from untargeted)"
+format:
+  html:
+    embed-resources: true
+    self-contained-math: true
+    toc: true
+    toc-location: left
+editor: visual
+---
+
+```{r, prep, message=FALSE}
+source("global.R")
+library(ggrepel)
+library(ComplexHeatmap)
+
+lipid <- readRDS("../data/untargeted_singletp_fin4_all(single_istd).rds")
+```
+
+*Analysis based on the targeted lipidomic results. File: mx 733759_Agus_lipidomics_human plasma lipoproteins_07-2023 submit.xlsx. The peak heights were converted to ng/mL based on the amount and peak height of iSTD.*
+
+## Data processing
+
+-   Peak heights across samples were normalized using all iSTDs.
+
+-   Features has been filtered by WCMC regarding the peak heights in samples and blanks.
+
+-   Features with InChI Keys that couldn't be found in the PubChem were excluded.
+
+-   Compounds with identical InChI Keys were selected by lowest CV in pooled samples.
+
+-   Assign lipid class from LIPID MAPS and manually curated table.
+
+-   Concentration were calculated based the istd with most similar unsaturation and then chain length.
+
+-   Cholesterol istd is missing. Import the value from mx733759_Agus_Lipids_Single-point quant_with cholesterol_Submit_10-17-23.xlsx
+
+Total peak heights consists of major lipid species which can be quantified with iSTDs and minor species which don't have corresponding iSTDs. The percentage of both types of species are shown below.
+
+```{r}
+peak <- lipid$peak
+lipid <- lipid$quant
+peak$fdata$major <- ifelse(featureNames(peak) %in% featureNames(lipid), "Major", "Minor")
+lipid.major <- summarize_feature(peak, "major")$edata
+lipid.major <- apply(lipid.major, 2, function(x)x/sum(x)*100)
+df <- as.data.frame(lipid.major) %>%
+        rownames_to_column("Type") %>%
+        pivot_longer(cols = contains("_0"), names_to = "fraction", values_to = "Perc") %>%
+        mutate(fraction = factor(fraction, levels = colnames(lipid.major))) %>%
+        group_by(fraction) %>%
+        mutate(ypos = 100 - cumsum(Perc) + 0.5 * Perc)
+ggplot(df, aes(x = "", y = Perc, fill = Type)) +
+        geom_bar(stat = "identity", color = "white") +
+        geom_label(aes(y = ypos, label = round(Perc, 1)), fill = "white") +
+        coord_polar("y", start = 0) +
+        theme_void() +
+        scale_fill_npg() +
+        facet_wrap(~fraction, nrow = 3)
+```
+
+The quantified data only included major lipid species.
+
+## CVs of pooled samples
+
+*The CVs of pooled samples for each lipid species were calculated using the following formula:*
+
+$$
+CV_{lipid\ species} = SD_{lipid\ species}/Mean_{lipid\ species} * 100\%
+$$
+
+*We are less confident with the lipid species with a high CV. These lipid species will be excluded for further analysis.*
+
+```{r, cv}
+hist(lipid$fdata$qc_cv, main = "The distribution of CVs")
+sum(lipid$fdata$qc_cv>30)
+```
+
+We excluded lipid species with a CV \> 30%. `r sum(lipid$fdata$qc_cv>30)` features were excluded.
+
+```{r, new data}
+lipid <- subset_features(lipid, lipid$fdata$qc_cv<30)
+
+
+```
+
+## Following analysis included all quantified lipid species.
+
+Included all quantified lipid species. `r nfeatures(lipid)` lipid species for analysis.
+
+## Lipid class
+
+### Pie chart
+
+```{r, class, fig.width=12, fig.height=8}
+lipid.class3 <- subset_features(lipid, !is.na(lipid$fdata$
+                                                       class))
+lipid.class3 <- summarize_feature(lipid.class3, "class")
+edata.prop3 <- apply(lipid.class3$edata, 2, function(col){
+        col/sum(col)*100
+})
+
+# pie chart
+pies.class3 <- lapply(sampleNames(lipid), plotPie, edata.prop3)
+legend.class3 <- get_legend(pies.class3[[1]]+theme(legend.position = "bottom"))
+pies.class3 <- lapply(pies.class3, function(x)x+theme(legend.position = "none"))
+plot_grid(plotlist = pies.class3, nrow = 3)
+```
+
+### Bar plot
+
+```{r, fig.width=16, fig.height=10}
+# bar plot
+plotBar(edata.prop3)
+```
+
+### PCA
+
+```{r}
+edata.scaled3 <- scale(t(edata.prop3), center = T)
+res.pca <- PCA(edata.scaled3, scale.unit = T, graph = FALSE)
+# fviz_eig(res.pca, addlabels = TRUE)
+fviz_pca_ind(res.pca, 
+             axes = c(1,2),
+             repel = TRUE,
+             title = NULL
+) +
+        theme_cynthia_bw() +
+        theme(
+                legend.position = "none"
+        ) +
+        labs(title = NULL)
+```
+
+## Lipid species enriched in fractions
+
+The analysis was based on peak heights. We assumed that the sum of peak heights in each sample represented the total lipid amount. Each lipid species was normalized to the total lipid amount before comparing across samples.
+
+## CVs of pooled samples
+
+```{r cv.peak}
+hist(peak$fdata$qc_cv, main = "The distribution of CVs")
+sum(peak$fdata$qc_cv>30)
+```
+
+We excluded lipid species with a CV \> 30%. `r sum(peak$fdata$qc_cv>30)` features were excluded.
+
+```{r norm_peak, echo=FALSE}
+peak <- subset_features(peak, peak$fdata$qc_cv<30)
+major.classes <- c("Cer", "CAR", "CE", "Cholesterol", "DG", "FA", "LPC", "LPE", "PC", "PE", "SM", "TG")
+classes <- peak$fdata$class
+classes[!classes %in% major.classes] <- "Other"
+peak$fdata$class <- classes
+peak.rel <- apply(peak$edata, 2, function(x){
+        x/sum(x)
+})
+```
+
+For example,
+
+```{r example, echo=FALSE}
+target.sp <- "Feature0109"
+all.lipid <- colSums(peak.rel)
+target.sp.conc <- peak.rel[target.sp, ]
+
+df <- data.frame(
+        all = all.lipid,
+        target.sp = target.sp.conc,
+        fraction = factor(names(target.sp.conc), levels = names(target.sp.conc))
+)
+ggplot(df)+
+        # geom_bar(aes(fraction, all), stat = "identity") +
+        geom_bar(aes(fraction, target.sp, fill = fraction), stat = "identity")+
+        labs(title = peak$fdata[target.sp, "name"], x = "", y = "Normalized Peak Height") +
+        theme_cynthia_bw()
+
+target.fraction <- 9
+ggplot(df, aes(x="", y=target.sp)) +
+        geom_jitter(width = 0.1) +
+        geom_hline(yintercept = target.sp.conc[target.fraction]) +
+        # scale_y_log10() +
+        theme_bw() +
+        annotate("text", x = 0.8, y = target.sp.conc[target.fraction]*1.1, label = sampleNames(lipid)[target.fraction])+
+        labs(x= "", y = "Normalized Peak Height", title = peak$fdata[target.sp, "name"]) +
+        theme_cynthia_bw()
+```
+
+## Species level
+
+```{r enrich, echo=FALSE}
+# background fractions
+bg.fraction <- c(2, 4:10, 12:15)
+
+# Function 1
+enrich_one_sp <- function(target.sp, target.fraction, bg.fraction, lipid.rel, log = FALSE){
+        other.fraction <- setdiff(bg.fraction, target.fraction)
+        # other.sp <- setdiff(featureNames(lipid), target.sp)
+        other.fraction.rel <- lipid.rel[target.sp, other.fraction]
+        target.fraction.rel <- lipid.rel[target.sp, target.fraction]
+        if (log) {
+                other.fraction.rel <- log(other.fraction.rel)
+                target.fraction.rel <- log(target.fraction.rel)
+        }
+        norm <- shapiro.test(other.fraction.rel)$p.value
+        tres <- t.test(other.fraction.rel, 
+                       mu = target.fraction.rel, 
+                       alternative = "less")
+        return(c(target = target.fraction.rel,
+                 mean.other = mean(other.fraction.rel), shapiro = norm, 
+                 pval = tres$p.value))
+}
+
+# function 2
+enrich_all_sp <- function(target.fraction, bg.fraction, lipid.rel, peak, log = FALSE){
+        res <- lapply(rownames(lipid.rel), function(sp){
+                enrich_one_sp(sp, target.fraction, bg.fraction, lipid.rel, log)
+        }) %>%
+                do.call(rbind, .) %>%
+                as.data.frame() %>%
+                mutate(padj = p.adjust(.$pval, method = "BH"))
+        rownames(res) <- featureNames(peak)
+        if(!is.null(peak$fdata)){
+                res <- cbind(peak$fdata[,c("name", "class")], res)
+        }
+        return(res)
+}
+
+# function 3
+enrich_all_fraction <- function(bg.fraction, lipid.rel, peak, log = FALSE){
+        res <- lapply(bg.fraction, function(target.fraction){
+                res <- enrich_all_sp(target.fraction, bg.fraction, lipid.rel, peak, log)
+                return(res$padj)
+        }) %>%
+                do.call(cbind, .)
+        colnames(res) <- sampleNames(peak)[bg.fraction]
+        rownames(res) <- featureNames(peak)
+        return(res)
+}
+p <- enrich_all_fraction(bg.fraction, peak.rel, peak, TRUE)
+
+# Heatmap of enrich species in each fraction
+mat <- as.matrix(p)
+mat[mat<0.01] <- 0.01
+mat <- -log(mat)
+
+# major.classes <- c("Cer", "CAR", "CE", "DG", "FA", "LPC", "LPE", "PC", "PE", "SM", "TG")
+# classes <- peak$fdata$class
+# classes[!classes %in% major.classes] <- "Other"
+cols <- RColorBrewer::brewer.pal(name = "Paired", n = 12)
+cols <- colorRampPalette(cols)(13)
+cols <- setNames(cols, unique(classes))
+
+Heatmap(mat, name = "-log(p)",
+        right_annotation = rowAnnotation(class = classes, col = list(class = cols)),
+        show_row_names = FALSE)
+```
+
+## Class level
+
+```{r peak.class}
+peak.class <- summarize_feature(peak, "class")
+peak.class.rel <- apply(peak.class$edata, 2, function(x){
+        x/sum(x)
+})
+p.class <- enrich_all_fraction(bg.fraction, peak.class.rel, peak.class, TRUE)
+
+# Heatmap of enrich species in each fraction
+mat.class <- as.matrix(p.class)
+mat.class[mat.class<0.01] <- 0.01
+mat.class <- -log(mat.class)
+
+# cols <- RColorBrewer::brewer.pal(name = "Paired", n = 12)
+# cols <- colorRampPalette(cols)(13)
+# cols <- setNames(cols, rownames(p.class))
+
+Heatmap(mat.class, name = "-log(p)")
+```
